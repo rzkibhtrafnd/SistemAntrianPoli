@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('queues', function (Blueprint $table) {
             $table->id();
-            $table->string('queue_number');
-            $table->foreignId('patient_id')->constrained('patients');
-            $table->foreignId('poli_id')->constrained('polis');
-            $table->foreignId('doctor_id')->constrained('doctors');
-            $table->enum('status', ['waiting', 'called', 'in_service', 'completed', 'cancelled'])->default('waiting');
+            $table->integer('queue_number');
+            $table->foreignId('patient_id');
+            $table->foreignId('poli_id');
+            $table->foreignId('doctor_id');
+            $table->time('schedule_time');
+            $table->string('status')->default('waiting');
             $table->timestamp('registration_time')->useCurrent();
             $table->timestamp('called_time')->nullable();
             $table->timestamp('finish_time')->nullable();
-            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

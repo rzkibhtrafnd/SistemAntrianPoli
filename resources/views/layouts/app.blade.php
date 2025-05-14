@@ -77,30 +77,6 @@
             background: #3B82F6;
         }
 
-        /* Custom Form Styling */
-        .form-input, .form-select, .form-textarea {
-            @apply w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-20;
-        }
-
-        /* Button Styles */
-        .btn-primary {
-            @apply flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors shadow-sm;
-        }
-
-        .btn-secondary {
-            @apply flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors shadow-sm;
-        }
-
-        /* Sidebar active indicator */
-        .sidebar-active {
-            @apply bg-primary-50 text-primary-700 border-l-4 border-primary-600 font-medium;
-        }
-
-        /* Card hover effect */
-        .card-hover {
-            @apply transition-all duration-300 hover:shadow-md hover:scale-[1.01] hover:bg-gray-50;
-        }
-
         /* Animations */
         @keyframes fadeIn {
             0% { opacity: 0; transform: translateY(10px); }
@@ -117,15 +93,7 @@
         @yield('content')
     </div>
 
-    <!-- Alpine.js for UI interactions -->
+    <!-- Alpine.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
-
-    <!-- Custom Scripts -->
-    <script>
-        // Add any global scripts here
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize any components
-        });
-    </script>
 </body>
 </html>

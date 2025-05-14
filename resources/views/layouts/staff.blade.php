@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>@yield('title') - {{ config('app.name', 'Rumah Sakit') }}</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Flowbite (Tailwind Components) -->
+  <!-- Flowbite -->
   <link rel="stylesheet" href="https://unpkg.com/flowbite@1.7.0/dist/flowbite.min.css" />
-  <!-- Poppins Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <script>
     tailwind.config = {
@@ -18,10 +18,7 @@
         extend: {
           fontFamily: { sans: ['Poppins', 'sans-serif'] }
         }
-      },
-      plugins: [
-        // Flowbite plugin if using CLI build
-      ]
+      }
     }
   </script>
   <style>body { font-family: 'Poppins', sans-serif; }</style>
@@ -38,31 +35,11 @@
       </div>
       <ul class="space-y-2 px-4">
         <li>
-        <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
-            <i data-feather="home" class="w-5 h-5 mr-3"></i> Dashboard
-        </a>
+          <a href="{{ route('queues.by-poli') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('queues.by-poli') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
+            <i data-feather="list" class="w-5 h-5 mr-3"></i> Antrian Poli
+          </a>
         </li>
-        <li>
-        <a href="{{ route('patients.index') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('patients.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
-            <i data-feather="users" class="w-5 h-5 mr-3"></i> Pasien
-        </a>
-        </li>
-        <li>
-        <a href="{{ route('polis.index') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('polis.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
-            <i data-feather="activity" class="w-5 h-5 mr-3"></i> Poli
-        </a>
-        </li>
-        <li>
-        <a href="{{ route('doctors.index') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('doctors.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
-            <i data-feather="user-plus" class="w-5 h-5 mr-3"></i> Dokter
-        </a>
-        </li>
-        <li>
-        <a href="{{ route('users.index') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 {{ request()->routeIs('users.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600' }}">
-            <i data-feather="user-check" class="w-5 h-5 mr-3"></i> User
-        </a>
-        </li>
-        <li class="pt-4 border-t border-gray-200 mt-4">
+                <li class="pt-4 border-t border-gray-200 mt-4">
             <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="w-full flex items-center p-3 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 transition">
@@ -72,6 +49,7 @@
         </li>
       </ul>
     </aside>
+
     <!-- Main -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Navbar -->
@@ -88,12 +66,15 @@
           </div>
         </div>
       </nav>
+
       <!-- Content -->
       <main class="flex-1 overflow-auto p-6">
         @yield('content')
       </main>
     </div>
   </div>
+
+  <!-- Scripts -->
   <script src="https://unpkg.com/flowbite@1.7.0/dist/flowbite.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <script>feather.replace()</script>

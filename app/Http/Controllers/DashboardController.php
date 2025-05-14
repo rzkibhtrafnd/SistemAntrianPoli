@@ -3,70 +3,64 @@
 namespace App\Http\Controllers;
 
 use App\Models\Queue;
-use App\Models\Poli;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $polis = Poli::where('status', 'active')->get();
-        return view('public.dashboard', compact('polis'));
+        $today = Carbon::today();
+
+        $queues = Queue::with(['poli', 'patient'])
+            ->whereDate('registration_time', $today)
+            ->get();
+
+        $polis = $queues->groupBy('poli_id')->map(function ($items, $poliId) {
+            $poliName = $items->first()->poli->name ?? '-';
+            $currentQueue = $items->where('status', 'called')->sortByDesc('called_time')->first();
+
+            return [
+                'id' => $poliId,
+                'name' => $poliName,
+                'current_queue' => $currentQueue->queue_number ?? null,
+                'current_patient' => $currentQueue->patient->name ?? null,
+                'waiting_count' => $items->where('status', 'waiting')->count(),
+                'completed_count' => $items->where('status', 'completed')->count(),
+            ];
+        })->values();
+
+        return view('public.dashboard', ['queues' => $queues, 'polis' => $polis]);
     }
 
     public function getQueueStatus()
     {
-        $today = date('Y-m-d');
+        $today = Carbon::today();
 
-        $queueStatus = Poli::where('status', 'active')
-            ->with(['queues' => function($query) use ($today) {
-                $query->whereDate('created_at', $today);
-            }])
-            ->get()
-            ->map(function($poli) {
-                $waiting = $poli->queues->where('status', 'waiting')->count();
-                $called = $poli->queues->where('status', 'called')->first();
-                $completed = $poli->queues->where('status', 'completed')->count();
+        $queues = Queue::with(['poli', 'patient'])
+            ->whereDate('registration_time', $today)
+            ->get();
 
-                return [
-                    'id' => $poli->id,
-                    'name' => $poli->name,
-                    'waiting_count' => $waiting,
-                    'current_queue' => $called ? $called->queue_number : null,
-                    'current_patient' => $called ? $called->patient->name : null,
-                    'completed_count' => $completed,
-                ];
-            });
+        $data = $queues->groupBy('poli_id')->map(function ($items, $poliId) {
+            $poliName = $items->first()->poli->name ?? '-';
+            $currentQueue = $items->where('status', 'called')->sortByDesc('called_time')->first();
 
-        return response()->json($queueStatus);
-    }
+            return [
+                'id' => $poliId,
+                'name' => $poliName,
+                'current_queue' => $currentQueue->queue_number ?? null,
+                'current_patient' => $currentQueue->patient->name ?? null,
+                'waiting_count' => $items->where('status', 'waiting')->count(),
+                'completed_count' => $items->where('status', 'completed')->count(),
+                'last_updated' => now()->toDateTimeString() // Tambahkan timestamp
+            ];
+        })->values();
 
-    public function getStatistics()
-    {
-        $today = date('Y-m-d');
+    $response = response()->json($data);
 
-        $statistics = [
-            'total_patients' => Queue::whereDate('created_at', $today)->count(),
-            'completed' => Queue::whereDate('created_at', $today)->where('status', 'completed')->count(),
-            'waiting' => Queue::whereDate('created_at', $today)->where('status', 'waiting')->count(),
-            'called' => Queue::whereDate('created_at', $today)->where('status', 'called')->count(),
-            'average_wait_time' => $this->calculateAverageWaitTime(),
-        ];
-
-        return response()->json($statistics);
-    }
-
-    private function calculateAverageWaitTime()
-    {
-        $today = date('Y-m-d');
-
-        $avgTime = Queue::whereDate('created_at', $today)
-            ->whereNotNull('called_time')
-            ->whereNotNull('registration_time')
-            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, registration_time, called_time)) as avg_wait_time'))
-            ->first();
-
-        return $avgTime->avg_wait_time ?? 0;
+    return $response->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                   ->header('Pragma', 'no-cache')
+                   ->header('Expires', '0');
     }
 }

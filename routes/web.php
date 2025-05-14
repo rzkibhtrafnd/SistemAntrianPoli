@@ -30,16 +30,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // Staff Poli routes
-Route::middleware(['auth', 'role:staff'])->group(function () {
-    Route::get('/poli-queue', [QueueController::class, 'getByPoli'])->name('queues.by-poli');
-    Route::post('/queue/call-next', [QueueController::class, 'callNext'])->name('queues.call-next');
-    Route::post('/queue/{id}/complete', [QueueController::class, 'complete'])->name('queues.complete');
-});
-
-// Public routes
 Route::get('/', [QueueController::class, 'create'])->name('queues.create');
 Route::post('/queues', [QueueController::class, 'store'])->name('queues.store');
 Route::get('/queues/{id}/print', [QueueController::class, 'printTicket'])->name('queues.print');
 
+// Staff routes
+Route::prefix('staff')->middleware(['auth', 'role:staff'])->group(function () {
+    Route::get('/queue', [QueueController::class, 'getByPoli'])->name('queues.by-poli');
+    Route::post('/queue/call-next', [QueueController::class, 'callNext'])->name('queues.call-next');
+    Route::post('/queue/{id}/complete', [QueueController::class, 'complete'])->name('queues.complete');
+});
+
 // Public dashboard route
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index']);
+Route::get('/dashboard/queue-status', [DashboardController::class, 'getQueueStatus']);

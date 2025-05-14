@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('specialization');
-            $table->foreignId('poli_id')->constrained('polis');
+            $table->foreignId('poli_id')->constrained('polis')->onDelete('cascade');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->json('schedule')->nullable();
             $table->timestamps();

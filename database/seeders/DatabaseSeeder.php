@@ -11,11 +11,14 @@ class DatabaseSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
-        // Menjalankan seeder untuk AdminUserSeeder
         $this->call([
-            AdminUserSeeder::class,
+            PoliSeeder::class,
+            PatientSeeder::class,
+            DoctorSeeder::class,
+            UserSeeder::class,
         ]);
     }
+
 }
