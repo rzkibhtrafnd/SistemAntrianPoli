@@ -2,34 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Queue;
 use App\Models\Patient;
-use App\Models\Doctor;
 use App\Models\Poli;
+use App\Models\Doctor;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class QueueController extends Controller
 {
-    public function create(Request $request)
+    public function create()
     {
         $patients = Patient::all();
-        $polis = Poli::all();
+        $polis = Poli::where('status', 'active')->get();
         $doctors = collect();
         $availableTimes = [];
 
-        $selectedPoliId = $request->input('poli_id');
-        $selectedDoctorId = $request->input('doctor_id');
-        $selectedTime = $request->input('schedule_time');
+        $selectedPoliId = request()->input('poli_id');
+        $selectedDoctorId = request()->input('doctor_id');
+        $selectedTime = request()->input('schedule_time');
 
         if ($selectedPoliId) {
-            $doctors = Doctor::where('poli_id', $selectedPoliId)->get();
+            $doctors = Doctor::where('poli_id', $selectedPoliId)
+                ->where('status', 'active')
+                ->get();
         }
 
         if ($selectedDoctorId) {
             $doctor = Doctor::find($selectedDoctorId);
-            $availableTimes = $this->getAvailableTimes($doctor);
+            $availableTimes = $doctor?->available_times ?? [];
         }
 
         return view('public.queue.create', compact(
@@ -40,117 +42,58 @@ class QueueController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'registration_number' => 'required|exists:patients,registration_number',
             'poli_id' => 'required|exists:polis,id',
             'doctor_id' => 'required|exists:doctors,id',
-            'schedule_time' => 'required|date_format:H:i',
+            'schedule_time' => 'required|date_format:H:i'
         ]);
 
-        $doctor = Doctor::findOrFail($data['doctor_id']);
-        $scheduleTime = Carbon::createFromFormat('H:i', $data['schedule_time']);
-        $now = now()->timezone('Asia/Jakarta');
+        $patient = Patient::where('registration_number', $validated['registration_number'])->firstOrFail();
+        $doctor = Doctor::findOrFail($validated['doctor_id']);
 
-        // Jika sudah lewat 1 jam dari jam mulai, tolak pendaftaran
-        if ($now->gt($scheduleTime->copy()->addHour())) {
-            return back()->withInput()->withErrors([
-                'schedule_time' => 'Pendaftaran untuk jam ini sudah ditutup. Silakan daftar untuk jadwal besok.',
-            ]);
+        if (!in_array($validated['schedule_time'], $doctor->available_times)) {
+            return back()->withErrors(['schedule_time' => 'Waktu praktek tidak valid'])->withInput();
         }
 
-        if (!$this->isValidScheduleTime($doctor, $scheduleTime)) {
-            return back()->withInput()->withErrors([
-                'schedule_time' => 'Waktu praktek tidak tersedia'
-            ]);
-        }
+        // Hitung jumlah antrean hari ini untuk Poli yang sama
+        $queueCount = Queue::where('poli_id', $validated['poli_id'])
+            ->whereDate('created_at', now())
+            ->count();
 
-        $queueNumber = $this->generateQueueNumber($data['poli_id']);
-
-        $patient = Patient::where('registration_number', $data['registration_number'])->firstOrFail();
+        $queueNumber = $queueCount + 1;
 
         $queue = Queue::create([
             'queue_number' => $queueNumber,
             'patient_id' => $patient->id,
-            'poli_id' => $data['poli_id'],
-            'doctor_id' => $data['doctor_id'],
-            'schedule_time' => $scheduleTime,
+            'poli_id' => $validated['poli_id'],
+            'doctor_id' => $validated['doctor_id'],
+            'schedule_time' => $validated['schedule_time'],
             'status' => 'waiting',
-            'registration_time' => $now,
+            'registration_time' => now(),
         ]);
 
-        return redirect()->route('queues.print', $queue->id)
-            ->with('success', 'Pendaftaran berhasil. Nomor antrian: '.$queueNumber);
+        return redirect()->route('queues.print', $queue->id)->with('success', 'Pendaftaran berhasil!');
     }
 
-
-    private function generateQueueNumber($poliId)
+    public function printTicket(Queue $queue)
     {
-        $todayCount = Queue::whereDate('registration_time', Carbon::today())
-            ->where('poli_id', $poliId)
-            ->count();
-
-        return $todayCount + 1;
-    }
-
-    private function isValidScheduleTime($doctor, $time)
-    {
-        $now = now()->timezone('Asia/Jakarta');
-        $schedule = $doctor->schedule;
-
-        if (!$schedule || !is_array($schedule)) return false;
-
-        $currentDay = $now->format('l'); // e.g., "Monday"
-
-        if (!isset($schedule[$currentDay])) return false;
-
-        [$startTime, $endTime] = $schedule[$currentDay];
-        $start = Carbon::createFromFormat('H:i', $startTime);
-        $end = Carbon::createFromFormat('H:i', $endTime);
-
-        return $time->between($start, $end) && $time->gt($now);
-    }
-
-    private function getAvailableTimes($doctor)
-    {
-        if (!$doctor || !is_array($doctor->schedule)) return [];
-
-        $schedule = $doctor->schedule;
-        $today = now()->timezone('Asia/Jakarta')->format('l'); // e.g., "Monday"
-
-        if (!isset($schedule[$today])) return [];
-
-        [$startTime, $endTime] = $schedule[$today];
-
-        $start = Carbon::createFromFormat('H:i', $startTime);
-        $now = now()->timezone('Asia/Jakarta');
-
-        // Tutup pendaftaran jika sudah lewat 1 jam dari jam mulai
-        if ($now->diffInMinutes($start, false) < -60) {
-            return []; // kosongkan jadwal
-        }
-
-        // Hanya tampilkan jam mulai saja
-        if ($now->lt($start)) {
-            return [$start->format('H:i')];
-        }
-
-        return []; // jika waktu sekarang sudah lewat jam mulai tapi belum lebih dari 1 jam
-    }
-
-    public function printTicket($id)
-    {
-        $queue = Queue::with(['patient', 'poli', 'doctor'])->findOrFail($id);
         return view('public.queue.ticket', compact('queue'));
     }
 
-    public function getByPoli()
+    public function getByPoli(Request $request)
     {
         $user = Auth::user();
-        $queues = Queue::with('patient', 'doctor')
-            ->where('poli_id', $user->poli_id)
-            ->orderBy('status')
+        $poliId = $user->poli_id;
+
+        $today = now()->toDateString();
+
+        $queues = Queue::with(['patient', 'doctor'])
+            ->where('poli_id', $poliId)
+            ->whereDate('created_at', $today)
+            ->orderByRaw("FIELD(status, 'waiting', 'called', 'completed')")
             ->orderBy('registration_time')
-            ->get();
+            ->paginate(15);
 
         return view('staff.queue.index', compact('queues'));
     }
@@ -189,5 +132,28 @@ class QueueController extends Controller
         ]);
 
         return back()->with('success', "Antrian {$queue->queue_number} selesai");
+    }
+
+    public function getDoctorsByPoli($poliId)
+    {
+        $doctors = Doctor::where('poli_id', $poliId)
+            ->where('status', 'active')
+            ->get();
+
+        return response()->json($doctors);
+    }
+
+    public function getScheduleByDoctor($doctorId)
+    {
+        $doctor = Doctor::findOrFail($doctorId);
+        $times = $doctor->available_times;
+
+        if (empty($times)) {
+            return response()->json([
+                'error' => 'Tidak ada jadwal tersedia untuk hari ini'
+            ], 404);
+        }
+
+        return response()->json($times);
     }
 }

@@ -29,10 +29,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class);
 });
 
-// Staff Poli routes
 Route::get('/', [QueueController::class, 'create'])->name('queues.create');
 Route::post('/queues', [QueueController::class, 'store'])->name('queues.store');
-Route::get('/queues/{id}/print', [QueueController::class, 'printTicket'])->name('queues.print');
+Route::get('/queues/getDoctors/{poliId}', [QueueController::class, 'getDoctorsByPoli']);
+Route::get('/queues/getSchedule/{doctorId}', [QueueController::class, 'getScheduleByDoctor']);
+Route::get('/queues/{queue}/print', [QueueController::class, 'printTicket'])->name('queues.print');
 
 // Staff routes
 Route::prefix('staff')->middleware(['auth', 'role:staff'])->group(function () {
@@ -42,5 +43,6 @@ Route::prefix('staff')->middleware(['auth', 'role:staff'])->group(function () {
 });
 
 // Public dashboard route
-Route::get('/dashboard', [DashboardController::class, 'index']);
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/dashboard/queue-status', [DashboardController::class, 'getQueueStatus']);
+

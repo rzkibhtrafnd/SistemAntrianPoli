@@ -3,243 +3,224 @@
 @section('title', 'Dashboard Antrian')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 md:p-12">
     <div class="max-w-7xl mx-auto">
-
         {{-- Header --}}
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Dashboard Antrian</h1>
-                <p class="text-gray-600">Monitor antrian pasien secara real-time</p>
+                <h1 class="text-4xl font-extrabold text-gray-900">Dashboard Antrian</h1>
+                <p class="mt-1 text-lg text-gray-600">Pantau antrian pasien secara real-time</p>
             </div>
-            <div class="mt-4 md:mt-0 bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="text-right mr-3">
-                        <p class="text-xs text-gray-500">Waktu Jakarta</p>
-                        <p id="current-time" class="text-lg font-semibold">
-                            {{ now()->timezone('Asia/Jakarta')->format('H:i:s') }}
-                        </p>
-                        <p id="current-date" class="text-sm">
-                            {{ now()->timezone('Asia/Jakarta')->format('d F Y') }}
-                        </p>
-                    </div>
-                    <i class="fas fa-clock text-3xl text-blue-500"></i>
+            <div class="mt-5 md:mt-0 bg-white rounded-xl shadow-lg px-6 py-4 flex items-center gap-5">
+                <div class="text-right">
+                    <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Waktu</p>
+                    <p id="current-time" class="text-2xl font-semibold text-indigo-600">{{ now()->format('H:i:s') }}</p>
+                    <p id="current-date" class="text-sm text-gray-500">{{ now()->translatedFormat('l, d F Y') }}</p>
                 </div>
+                <i class="fas fa-clock text-indigo-400 text-4xl"></i>
             </div>
-        </div>
+        </header>
 
         {{-- Statistik --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            @php
-                $totalPatients = $queues->count();
-                $waitingCount = $queues->where('status', 'waiting')->count();
-                $calledCount = $queues->where('status', 'called')->count();
-                $completedCount = $queues->where('status', 'completed')->count();
-            @endphp
-
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i class="fas fa-users text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Total Pasien Hari Ini</p>
-                        <p id="total-patients" class="text-2xl font-bold">{{ $totalPatients }}</p>
-                    </div>
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                <div class="p-4 rounded-full bg-indigo-100 text-indigo-700">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-400">Total Pasien Hari Ini</p>
+                    <p id="total-patients" class="text-3xl font-extrabold text-gray-900">{{ $initialData['global_stats']['total_patients'] }}</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                        <i class="fas fa-clock text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Menunggu</p>
-                        <p id="waiting-count" class="text-2xl font-bold">{{ $waitingCount }}</p>
-                    </div>
+            <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                <div class="p-4 rounded-full bg-yellow-100 text-yellow-700">
+                    <i class="fas fa-hourglass-half text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-400">Menunggu</p>
+                    <p id="waiting-count" class="text-3xl font-extrabold text-gray-900">{{ $initialData['global_stats']['waiting_count'] }}</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i class="fas fa-bell text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Dipanggil</p>
-                        <p id="called-count" class="text-2xl font-bold">{{ $calledCount }}</p>
-                    </div>
+            <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                <div class="p-4 rounded-full bg-blue-100 text-blue-700">
+                    <i class="fas fa-bullhorn text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-400">Dipanggil</p>
+                    <p id="called-count" class="text-3xl font-extrabold text-gray-900">{{ $initialData['global_stats']['called_count'] }}</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i class="fas fa-check-circle text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Selesai</p>
-                        <p id="completed-count" class="text-2xl font-bold">{{ $completedCount }}</p>
-                    </div>
+            <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                <div class="p-4 rounded-full bg-green-100 text-green-700">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-400">Selesai</p>
+                    <p id="completed-count" class="text-3xl font-extrabold text-gray-900">{{ $initialData['global_stats']['completed_count'] }}</p>
                 </div>
             </div>
-        </div>
+        </section>
 
         {{-- Sedang Dipanggil --}}
-        @php
-            $currentCall = $queues->where('status', 'called')->sortByDesc('called_time')->first();
-        @endphp
-        @if($currentCall)
-        <div class="mb-8">
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="bg-blue-600 px-6 py-4">
-                    <h2 class="text-xl font-bold text-white">Sedang Dipanggil</h2>
+        <section id="current-call-section" class="mb-12">
+            @if($initialData['global_current_call'])
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-indigo-300">
+                <div class="bg-indigo-600 px-8 py-5">
+                    <h2 class="text-2xl font-bold text-white tracking-wide">Sedang Dipanggil</h2>
                 </div>
-                <div class="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-12">
                     <div class="text-center md:text-left">
-                        <p class="text-sm text-gray-500">Nomor Antrian</p>
-                        <p class="text-4xl font-bold text-blue-600">{{ $currentCall->queue_number }}</p>
+                        <p class="uppercase text-gray-400 text-sm tracking-wide">Nomor Antrian</p>
+                        <p class="text-6xl font-extrabold text-indigo-700 leading-tight">{{ $initialData['global_current_call']['queue_number'] }}</p>
                     </div>
                     <div class="text-center md:text-left">
-                        <p class="text-sm text-gray-500">Nama Pasien</p>
-                        <p class="text-2xl font-semibold">{{ $currentCall->patient->name ?? '-' }}</p>
+                        <p class="uppercase text-gray-400 text-sm tracking-wide">Nama Pasien</p>
+                        <p class="text-3xl font-semibold text-gray-900">{{ $initialData['global_current_call']['patient_name'] }}</p>
                     </div>
                     <div class="text-center md:text-left">
-                        <p class="text-sm text-gray-500">Poli</p>
-                        <p class="text-xl">{{ $currentCall->poli->name ?? '-' }}</p>
+                        <p class="uppercase text-gray-400 text-sm tracking-wide">Poli</p>
+                        <p class="text-2xl text-indigo-600 font-semibold">{{ $initialData['global_current_call']['poli_name'] }}</p>
                     </div>
                 </div>
             </div>
-        </div>
-        @endif
+            @endif
+        </section>
 
         {{-- Status Antrian per Poli --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @foreach($polis as $poli)
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-xl font-bold mb-4 text-blue-600">{{ $poli['name'] }}</h3>
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach($initialData['polis'] as $poli)
+            <div class="bg-white rounded-xl shadow-lg p-8 border border-indigo-200 hover:shadow-xl transition-shadow">
+                <h3 class="text-2xl font-bold mb-6 text-indigo-600">{{ $poli['name'] }}</h3>
 
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center mb-6">
                     <div>
-                        <p class="text-sm text-gray-500">Antrian Sekarang</p>
-                        <p class="text-3xl font-bold">{{ $poli['current_queue'] ?? '-' }}</p>
+                        <p class="uppercase text-gray-400 text-sm tracking-wide">Antrian Sekarang</p>
+                        <p id="current-queue-{{ $poli['id'] }}" class="text-4xl font-extrabold text-gray-900">{{ $poli['current_queue'] ?? '-' }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm text-gray-500">Pasien</p>
-                        <p class="text-lg">{{ $poli['current_patient'] ?? '-' }}</p>
+                        <p class="uppercase text-gray-400 text-sm tracking-wide">Pasien</p>
+                        <p class="text-xl font-semibold text-gray-700">{{ $poli['current_patient'] ?? '-' }}</p>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Menunggu</span>
-                        <span class="font-medium">{{ $poli['waiting_count'] }}</span>
+                <div class="space-y-3 text-gray-600 text-base">
+                    <div class="flex justify-between">
+                        <span>Menunggu</span>
+                        <span id="waiting-{{ $poli['id'] }}" class="font-semibold text-gray-800">{{ $poli['waiting_count'] }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Selesai</span>
-                        <span class="font-medium">{{ $poli['completed_count'] }}</span>
+                    <div class="flex justify-between">
+                        <span>Selesai</span>
+                        <span id="completed-{{ $poli['id'] }}" class="font-semibold text-gray-800">{{ $poli['completed_count'] }}</span>
                     </div>
                 </div>
             </div>
             @endforeach
-        </div>
+        </section>
     </div>
 </div>
 
-{{-- Audio --}}
-<audio id="announcement-sound" src="{{ asset('sounds/notification.mp3') }}" preload="auto"></audio>
 <audio id="call-sound" src="{{ asset('sounds/call.mp3') }}" preload="auto"></audio>
+<audio id="notification-sound" src="{{ asset('sounds/notification.mp3') }}" preload="auto"></audio>
 @endsection
 
 @push('scripts')
 <script>
-let isFirstLoad = true;
-let lastUpdateTime = null;
-
-function fetchQueueData() {
-    fetch('/dashboard/queue-status?t=' + new Date().getTime()) // Tambahkan cache buster
-        .then(res => {
-            if (!res.ok) throw new Error('Network response was not ok');
-            return res.json();
-        })
-        .then(data => {
-            let currentCall = null;
-            let hasChanges = false;
-
-            data.forEach(poli => {
-                const id = poli.id;
-                const waitingCount = poli.waiting_count;
-                const completedCount = poli.completed_count;
-
-                // Periksa apakah data berbeda dengan yang ditampilkan
-                const currentDisplayed = {
-                    queue: document.getElementById(`current-queue-${id}`).textContent,
-                    waiting: document.getElementById(`waiting-${id}`).textContent,
-                    completed: document.getElementById(`completed-${id}`).textContent
-                };
-
-                if (currentDisplayed.queue !== (poli.current_queue || '-') ||
-                    currentDisplayed.waiting != waitingCount ||
-                    currentDisplayed.completed != completedCount) {
-                    hasChanges = true;
-                }
-
-                // Update UI
-                document.getElementById(`current-queue-${id}`).textContent = poli.current_queue || '-';
-                document.getElementById(`waiting-${id}`).textContent = waitingCount;
-                document.getElementById(`completed-${id}`).textContent = completedCount;
-
-                if (poli.current_queue && (isFirstLoad || lastCalledNumber !== poli.current_queue)) {
-                    currentCall = poli;
-                }
-            });
-
-            if (hasChanges || isFirstLoad) {
-                updateGlobalStats(data);
-
-                if (currentCall) {
-                    updateCurrentCall(currentCall);
-                    lastCalledNumber = currentCall.current_queue;
-                }
-            }
-
-            isFirstLoad = false;
-        })
-        .catch(error => {
-            console.error('Error fetching queue data:', error);
-            // Coba lagi lebih cepat jika error
-            setTimeout(fetchQueueData, 1000);
-        });
-}
-
-function updateGlobalStats(data) {
-    const totalWaiting = data.reduce((sum, poli) => sum + poli.waiting_count, 0);
-    const totalCompleted = data.reduce((sum, poli) => sum + poli.completed_count, 0);
-    const totalCalled = data.filter(poli => poli.current_queue).length;
-
-    document.getElementById('waiting-count').textContent = totalWaiting;
-    document.getElementById('completed-count').textContent = totalCompleted;
-    document.getElementById('called-count').textContent = totalCalled;
-    document.getElementById('total-patients').textContent = totalWaiting + totalCompleted + totalCalled;
-}
-
-function updateCurrentCall(currentCall) {
-    const callContainer = document.getElementById('current-call-container');
-    callContainer.classList.remove('hidden');
-    document.getElementById('current-call-number').textContent = currentCall.current_queue;
-    document.getElementById('current-call-patient').textContent = currentCall.current_patient;
-    document.getElementById('current-call-poli').textContent = currentCall.name;
-
-    // Hanya play sound jika bukan first load
-    if (!isFirstLoad) {
-        playCallSound();
-        speakAnnouncement(`Nomor antrian ${currentCall.current_queue}, atas nama ${currentCall.current_patient}, silakan menuju ${currentCall.name}`);
+    // Update waktu real-time
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('current-time').textContent =
+            now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('current-date').textContent =
+            now.toLocaleDateString('id-ID', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
     }
-}
+    setInterval(updateClock, 1000);
+    updateClock();
 
-// Ubah interval menjadi 3 detik
-setInterval(fetchQueueData, 3000);
-fetchQueueData();
+    // Real-time queue updates
+    let lastUpdateTime = null;
+    let lastCalledQueue = null;
+
+    function fetchQueueData() {
+        fetch('/dashboard/queue-status?t=' + new Date().getTime())
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                // Update global stats
+                document.getElementById('total-patients').textContent = data.global_stats.total_patients;
+                document.getElementById('waiting-count').textContent = data.global_stats.waiting_count;
+                document.getElementById('called-count').textContent = data.global_stats.called_count;
+                document.getElementById('completed-count').textContent = data.global_stats.completed_count;
+
+                // Update per poli
+                data.polis.forEach(poli => {
+                    document.getElementById(`current-queue-${poli.id}`).textContent = poli.current_queue || '-';
+                    document.getElementById(`waiting-${poli.id}`).textContent = poli.waiting_count;
+                    document.getElementById(`completed-${poli.id}`).textContent = poli.completed_count;
+                });
+
+                // Update current call section
+                updateCurrentCall(data.global_current_call);
+            })
+            .catch(error => {
+                console.error('Error fetching queue data:', error);
+                setTimeout(fetchQueueData, 5000); // Retry after 5 seconds on error
+            });
+    }
+
+    function updateCurrentCall(currentCall) {
+        const section = document.getElementById('current-call-section');
+
+        if (!currentCall) {
+            section.innerHTML = '';
+            return;
+        }
+
+        // Check if this is a new call
+        if (lastCalledQueue !== currentCall.queue_number) {
+            lastCalledQueue = currentCall.queue_number;
+            document.getElementById('call-sound').play();
+
+            const html = `
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-indigo-300 animate-pulse">
+                    <div class="bg-indigo-600 px-8 py-5">
+                        <h2 class="text-2xl font-bold text-white tracking-wide">Sedang Dipanggil</h2>
+                    </div>
+                    <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-12">
+                        <div class="text-center md:text-left">
+                            <p class="uppercase text-gray-400 text-sm tracking-wide">Nomor Antrian</p>
+                            <p class="text-6xl font-extrabold text-indigo-700 leading-tight">${currentCall.queue_number}</p>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <p class="uppercase text-gray-400 text-sm tracking-wide">Nama Pasien</p>
+                            <p class="text-3xl font-semibold text-gray-900">${currentCall.patient_name}</p>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <p class="uppercase text-gray-400 text-sm tracking-wide">Poli</p>
+                            <p class="text-2xl text-indigo-600 font-semibold">${currentCall.poli_name}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            section.innerHTML = html;
+
+            // Remove animation after 2 seconds
+            setTimeout(() => {
+                const element = section.querySelector('.animate-pulse');
+                if (element) {
+                    element.classList.remove('animate-pulse');
+                }
+            }, 2000);
+        }
+    }
+
+    // Fetch data every 2 seconds
+    setInterval(fetchQueueData, 2000);
+    fetchQueueData(); // Initial load
 </script>
 @endpush

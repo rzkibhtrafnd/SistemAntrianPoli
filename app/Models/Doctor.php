@@ -15,35 +15,6 @@ class Doctor extends Model
         'schedule' => 'array',
     ];
 
-    public function getAvailableTimesAttribute()
-    {
-        $now = now()->timezone('Asia/Jakarta');
-        $schedule = $this->schedule;
-
-        if (!$schedule) return [];
-
-        $currentDay = strtolower($now->isoFormat('dddd'));
-        if (!in_array($currentDay, $schedule['days'])) {
-            return [];
-        }
-
-        $start = Carbon::createFromFormat('H:i', $schedule['start_time']);
-        $end = Carbon::createFromFormat('H:i', $schedule['end_time']);
-        $interval = $schedule['interval'] ?? 15;
-
-        $times = [];
-        $current = $start->copy();
-
-        while ($current <= $end) {
-            if ($current->gt($now)) {
-                $times[] = $current->format('H:i');
-            }
-            $current->addMinutes($interval);
-        }
-
-        return $times;
-    }
-
     public function poli()
     {
         return $this->belongsTo(Poli::class);
@@ -53,4 +24,34 @@ class Doctor extends Model
     {
         return $this->hasMany(Queue::class);
     }
+
+    public function getAvailableTimesAttribute()
+{
+    $schedule = $this->schedule;
+    if (!$schedule || empty($schedule)) {
+        return [];
+    }
+
+    $today = now()->format('l'); // e.g. "Monday"
+    $times = [];
+
+    // Cek jika format schedule baru (dengan hari sebagai key)
+    if (isset($schedule[$today])) {
+        $timeSlots = $schedule[$today];
+        if (is_array($timeSlots) && count($timeSlots) >= 2) {
+            $start = Carbon::createFromFormat('H:i', $timeSlots[0]);
+            $end = Carbon::createFromFormat('H:i', $timeSlots[1]);
+
+            $interval = 15; // menit
+            $current = $start->copy();
+
+            while ($current->lt($end)) {
+                $times[] = $current->format('H:i');
+                $current->addMinutes($interval);
+            }
+        }
+    }
+
+    return $times;
+}
 }
